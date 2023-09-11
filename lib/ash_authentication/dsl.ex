@@ -8,6 +8,7 @@ defmodule AshAuthentication.Dsl do
   import AshAuthentication.Utils, only: [to_sentence: 2]
   import Joken.Signer, only: [algorithms: 0]
 
+  alias AshAuthentication.Jwt
   alias Ash.{Api, Resource}
 
   @default_token_lifetime_days 14
@@ -141,9 +142,21 @@ defmodule AshAuthentication.Dsl do
                 default: hd(algorithms())
               ],
               token_lifetime: [
-                type: :pos_integer,
+                type: {
+                  :or,
+                  [
+                    :pos_integer,
+                    {:tuple,
+                     [
+                       :pos_integer,
+                       {:in, Jwt.Config.token_lifetime_units()}
+                     ]}
+                  ]
+                },
                 doc: """
-                How long a token should be valid, in hours.
+                How long a token should be valid, in hours. Can alternatively be
+                specified in other units via {value, unit}, where valid units are
+                `:second`, `:minute`, `:hour`, `:day`. For example `{20, :minute}`
 
                 Since refresh tokens are not yet supported, you should
                 probably set this to a reasonably long time to ensure

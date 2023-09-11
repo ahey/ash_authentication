@@ -14,6 +14,61 @@ defmodule AshAuthentication.Jwt.ConfigTest do
                assert is_struct(config, Joken.Claim)
              end)
     end
+
+    test "token_lifetime can be provided in hours by supplying an int" do
+      expected_expiry = DateTime.utc_now() |> DateTime.add(1, :hour)
+
+      assert {:ok, %{"exp" => exp}} =
+               Config.default_claims(Example.User, token_lifetime: 1)
+               |> Joken.generate_claims()
+
+      assert {:ok, expiry} = DateTime.from_unix(exp)
+      assert DateTime.diff(expected_expiry, expiry, :second) |> abs() <= 2
+    end
+
+    test "token_lifetime can be provided in seconds by suppying a tuple" do
+      expected_expiry = DateTime.utc_now() |> DateTime.add(30, :second)
+
+      assert {:ok, %{"exp" => exp}} =
+               Config.default_claims(Example.User, token_lifetime: {30, :second})
+               |> Joken.generate_claims()
+
+      assert {:ok, expiry} = DateTime.from_unix(exp)
+      assert DateTime.diff(expected_expiry, expiry, :second) |> abs() <= 2
+    end
+
+    test "token_lifetime can be provided in minutes by suppying a tuple" do
+      expected_expiry = DateTime.utc_now() |> DateTime.add(1, :minute)
+
+      assert {:ok, %{"exp" => exp}} =
+               Config.default_claims(Example.User, token_lifetime: {1, :minute})
+               |> Joken.generate_claims()
+
+      assert {:ok, expiry} = DateTime.from_unix(exp)
+      assert DateTime.diff(expected_expiry, expiry, :second) |> abs() <= 2
+    end
+
+    test "token_lifetime can be provided in hours by suppying a tuple" do
+      expected_expiry = DateTime.utc_now() |> DateTime.add(1, :hour)
+
+      assert {:ok, %{"exp" => exp}} =
+               Config.default_claims(Example.User, token_lifetime: {1, :hour})
+               |> Joken.generate_claims()
+
+      assert {:ok, expiry} = DateTime.from_unix(exp)
+      assert DateTime.diff(expected_expiry, expiry, :second) |> abs() <= 2
+    end
+
+    test "token_lifetime can be provided in days by suppying a tuple" do
+      expected_expiry = DateTime.utc_now() |> DateTime.add(1, :day)
+
+      assert {:ok, %{"exp" => exp}} =
+               Config.default_claims(Example.User, token_lifetime: {1, :day})
+               |> Joken.generate_claims()
+
+      assert {:ok, expiry} = DateTime.from_unix(exp)
+      assert DateTime.diff(expected_expiry, expiry, :second) |> abs() <= 2
+    end
   end
 
   describe "generate_issuer/1" do

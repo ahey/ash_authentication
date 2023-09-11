@@ -12,7 +12,10 @@ defmodule AshAuthentication.Jwt do
   There are a few things we need to know in order to generate and sign a JWT:
 
     * `signing_algorithm` - the crypographic algorithm used to to sign tokens.
-    * `token_lifetime` - how long the token is valid for (in hours).
+    * `token_lifetime` - how long the token is valid for (in hours). Can
+         alternatively be specified in other units via {value, unit}, where
+         valid units are `:second`, `:minute`, `:hour`, `:day`. For example
+        `{20, :minute}`
     * `signing_secret` - the secret key used to sign the tokens.
 
   These can be configured in your resource's token DSL:

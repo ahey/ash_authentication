@@ -1,4 +1,4 @@
-defmodule Example.UserWithTokenRequired do
+defmodule Example.UserWithTokenLifetimeAsTuple do
   @moduledoc false
   use Ash.Resource, data_layer: AshPostgres.DataLayer, extensions: [AshAuthentication]
   require Logger
@@ -28,19 +28,12 @@ defmodule Example.UserWithTokenRequired do
       require_token_presence_for_authentication? true
       token_resource Example.Token
       signing_secret &get_config/2
+      token_lifetime {20, :second}
     end
 
     strategies do
       password do
         identity_field :email
-
-        resettable do
-          sender fn user, token, _opts ->
-            Logger.debug(
-              "Password reset request for user #{user.username}, token #{inspect(token)}"
-            )
-          end
-        end
       end
     end
   end
@@ -54,7 +47,7 @@ defmodule Example.UserWithTokenRequired do
   end
 
   postgres do
-    # Sharing the database table with Example.UserWithTokenLifetimeAsTuple
+    # Sharing the database table with Example.UserWithTokenRequired
     table "user_with_token_required"
     repo(Example.Repo)
   end

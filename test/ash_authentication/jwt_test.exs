@@ -45,6 +45,18 @@ defmodule AshAuthentication.JwtTest do
       assert_in_delta(claims["nbf"], now, 1.5)
       assert claims["sub"] == "user?id=#{user.id}"
     end
+
+    test "correctly calculates expiry when token lifetime is given as a tuple" do
+      user = build_user_with_token_lifetime_as_tuple()
+
+      expected =
+        DateTime.utc_now()
+        |> DateTime.add(20, :second)
+        |> DateTime.to_unix()
+
+      assert {:ok, _token, claims} = Jwt.token_for_user(user)
+      assert_in_delta(claims["exp"], expected, 2)
+    end
   end
 
   describe "verify/2" do

@@ -16,13 +16,7 @@ defmodule AshAuthentication.Jwt.Config do
   """
   @spec default_claims(Resource.t(), keyword) :: Joken.token_config()
   def default_claims(resource, opts \\ []) do
-    token_lifetime =
-      opts
-      |> Keyword.fetch(:token_lifetime)
-      |> case do
-        {:ok, hours} -> hours * 60 * 60
-        :error -> token_lifetime(resource)
-      end
+    token_lifetime = token_lifetime(resource, opts)
 
     {:ok, vsn} = :application.get_key(:ash_authentication, :vsn)
 
@@ -153,12 +147,59 @@ defmodule AshAuthentication.Jwt.Config do
     Signer.create(algorithm, signing_secret)
   end
 
-  defp token_lifetime(resource) do
+  @token_lifetime_units [:second, :minute, :hour, :day]
+
+  def token_lifetime_units do
+    @token_lifetime_units
+  end
+
+  defp token_lifetime(resource, opts) do
+    (token_lifetime_from_opts(opts) ||
+       token_lifetime_from_resource(resource) ||
+       {Jwt.default_lifetime_hrs(), :hour})
+    |> token_lifetime_tuple_to_seconds()
+  end
+
+  defp token_lifetime_from_opts(opts) do
+    opts
+    |> Keyword.fetch(:token_lifetime)
+    |> case do
+      {:ok, val} -> normalize_token_lifetime(val)
+      :error -> nil
+    end
+  end
+
+  defp token_lifetime_from_resource(resource) do
     resource
     |> Info.authentication_tokens_token_lifetime()
     |> case do
-      {:ok, hours} -> hours * 60 * 60
-      :error -> Jwt.default_lifetime_hrs() * 60 * 60
+      {:ok, val} -> normalize_token_lifetime(val)
+      :error -> nil
     end
+  end
+
+  defp normalize_token_lifetime(val) when is_integer(val) do
+    {val, :hour}
+  end
+
+  defp normalize_token_lifetime({val, unit})
+       when is_integer(val) and unit in @token_lifetime_units do
+    {val, unit}
+  end
+
+  defp token_lifetime_tuple_to_seconds({val, :second}) do
+    val
+  end
+
+  defp token_lifetime_tuple_to_seconds({val, :minute}) do
+    val * 60
+  end
+
+  defp token_lifetime_tuple_to_seconds({val, :hour}) do
+    val * 60 * 60
+  end
+
+  defp token_lifetime_tuple_to_seconds({val, :day}) do
+    val * 60 * 60 * 24
   end
 end
